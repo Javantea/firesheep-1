@@ -150,14 +150,9 @@ BUILD_TARGET=$build_target
 AC_SUBST(BUILD_TARGET)
 
 if test x$TARGET = xLINUX; then
-	PKG_CHECK_MODULES([HAL], [hal],
-	   	[AC_DEFINE([HAVE_HAL], [1], [Use HAL])
-		AC_SUBST(HAL_CFLAGS)
-		AC_SUBST(HAL_LIBS)
-	], 
-		[
-		echo "Without HAL, you will need to choose the right interface yourself."
-	])
+	PKG_CHECK_MODULES(HAL, [hal])
+	AC_SUBST(HAL_CFLAGS)
+	AC_SUBST(HAL_LIBS)
 fi
 # END LINUX
 
