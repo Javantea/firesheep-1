@@ -26,7 +26,11 @@
 #include <cstdio>
 #include <pcap/pcap.h>
 #include "linux_platform.hpp"
+#ifdef HAVE_HAL
 #include <libhal.h>
+#else
+// TODO: Implement libudev.
+#endif // HAVE_HAL
 
 using namespace std;
 using namespace boost;
@@ -39,6 +43,7 @@ bool LinuxPlatform::run_privileged() {
   return true;
 }
 
+#ifdef HAVE_HAL
 string device_get_property_string(LibHalContext *context, string device, string key, DBusError *error)
 {
   char *buf = libhal_device_get_property_string(context, device.c_str(), key.c_str(), error);
@@ -49,16 +54,23 @@ string device_get_property_string(LibHalContext *context, string device, string 
   }
   return string(buf);
 }
+#else
+  // FIXME: Get the data using libudev.
+  
+#endif // HAVE_HAL
 
 vector<InterfaceInfo> LinuxPlatform::interfaces()
 {
   vector<InterfaceInfo> result;
   
+#ifdef HAVE_HAL
   DBusError     error;
   LibHalContext *context;
+#endif // HAVE_HAL
   char          **devices;
   int           num_devices;
 
+#ifdef HAVE_HAL
   /* Create HAL context */
   context = libhal_ctx_new();
   if (context == NULL)
@@ -129,6 +141,20 @@ vector<InterfaceInfo> LinuxPlatform::interfaces()
   
   /* Free devices */
   libhal_free_string_array(devices);
+#else
+  // This is a stupid bad but effective hack.
+  // TODO: libudev support.
+  string iface = "wlan0";
+  string description = "Do you have wlan0?";
+  string type = "ieee80211";
+  InterfaceInfo info(iface, description, type);
+  result.push_back(info);
+  iface = "eth0";
+  description = "Do you have eth0?";
+  type = "ieee80211";
+  InterfaceInfo info2(iface, description, type);
+  result.push_back(info2);
+#endif // HAVE_HAL
 
   return result; 
 }
